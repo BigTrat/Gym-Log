@@ -6,6 +6,7 @@ import ProgressScreen from './screens/ProgressScreen.jsx'
 import SettingsScreen from './screens/SettingsScreen.jsx'
 import { useSessions } from './hooks/useSessions.js'
 import { useTemplates } from './hooks/useTemplates.js'
+import { useBodyWeight } from './hooks/useBodyWeight.js'
 
 const titles = {
   log: 'Today',
@@ -18,6 +19,7 @@ export default function App() {
   const [tab, setTab] = useState('log')
   const store = useSessions()
   const templateStore = useTemplates()
+  const bwStore = useBodyWeight()
 
   return (
     <div className="min-h-full flex flex-col bg-ink-950 text-slate-100">
@@ -39,7 +41,7 @@ export default function App() {
         {tab === 'log' && <LogScreen {...store} {...templateStore} />}
         {tab === 'history' && <HistoryScreen {...store} />}
         {tab === 'progress' && <ProgressScreen {...store} />}
-        {tab === 'settings' && <SettingsScreen {...store} />}
+        {tab === 'settings' && <SettingsScreen {...store} {...bwStore} />}
       </main>
 
       <BottomNav active={tab} onChange={setTab} />

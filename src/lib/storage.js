@@ -76,6 +76,23 @@ export function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 }
 
+const BW_KEY = 'gymlog.bodyweight.v1'
+
+export function loadBodyWeights() {
+  try {
+    const raw = localStorage.getItem(BW_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function saveBodyWeights(entries) {
+  localStorage.setItem(BW_KEY, JSON.stringify(entries))
+}
+
 const TEMPLATES_KEY = 'gymlog.templates.v1'
 
 export function loadTemplates() {
