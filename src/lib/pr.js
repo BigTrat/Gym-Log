@@ -53,20 +53,86 @@ const CATEGORY_KEYWORDS = {
   Legs: ['squat', 'lunge', 'leg', 'calf', 'hamstring', 'glute', 'hip']
 }
 
+export function categorizeExercise(name) {
+  const lower = name.toLowerCase()
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) return cat
+  }
+  return null
+}
+
 export function detectCategory(exerciseNames) {
   const found = new Set()
   for (const name of exerciseNames) {
-    const lower = name.toLowerCase()
-    for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-      if (keywords.some((kw) => lower.includes(kw))) {
-        found.add(cat)
-        break
-      }
-    }
+    const cat = categorizeExercise(name)
+    if (cat) found.add(cat)
   }
   if (found.size === 0) return null
   if (found.size === 1) return [...found][0]
   return 'Full Body'
+}
+
+// Muscle → keyword mapping (an exercise can light up multiple groups)
+const MUSCLE_KEYWORDS = {
+  chest:     ['bench', 'chest', 'fly', 'pec', 'dip', 'push-up', 'pushup'],
+  shoulders: ['shoulder', 'press', 'overhead', 'delt', 'lateral', 'front raise', 'arnold'],
+  triceps:   ['tricep', 'pushdown', 'extension', 'skull', 'close grip', 'dip'],
+  biceps:    ['bicep', 'curl', 'chin'],
+  back:      ['row', 'deadlift', 'shrug', 'hyperextension', 'trap', 'rear delt'],
+  lats:      ['lat', 'pulldown', 'pull-up', 'pullup', 'chin', 'pull'],
+  legs:      ['squat', 'lunge', 'leg', 'calf', 'hamstring', 'glute', 'hip', 'rdl', 'romanian'],
+  core:      ['plank', 'crunch', 'ab', 'core', 'sit-up', 'situp', 'oblique', 'twist']
+}
+
+function exerciseMuscleGroups(name) {
+  const lower = name.toLowerCase()
+  const groups = []
+  for (const [group, keywords] of Object.entries(MUSCLE_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) groups.push(group)
+  }
+  return groups
+}
+
+function weekStart() {
+  const today = new Date()
+  const day = today.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(today)
+  monday.setDate(today.getDate() + diff)
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const d = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export function muscleHeatThisWeek(sessions) {
+  const start = weekStart()
+  const heat = { chest: 0, shoulders: 0, triceps: 0, biceps: 0, back: 0, lats: 0, legs: 0, core: 0 }
+  for (const s of sessions) {
+    if (s.date < start) continue
+    for (const e of s.entries) {
+      for (const group of exerciseMuscleGroups(e.exercise)) {
+        heat[group] += e.sets.length
+      }
+    }
+  }
+  return heat
+}
+
+export function weeklyVolumeByCategory(sessions) {
+  const start = weekStart()
+  const volume = { Push: 0, Pull: 0, Legs: 0 }
+  for (const s of sessions) {
+    if (s.date < start) continue
+    for (const e of s.entries) {
+      const cat = categorizeExercise(e.exercise)
+      if (!cat || !(cat in volume)) continue
+      for (const set of e.sets) {
+        volume[cat] += set.reps * set.weight
+      }
+    }
+  }
+  return volume
 }
 
 export function progressSeries(sessions, exerciseName) {
