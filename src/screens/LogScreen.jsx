@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate, todayISO, topWeight } from '../lib/storage.js'
-import { exerciseNames, lastLoggedEntry, maxWeightBeforeEntry } from '../lib/pr.js'
+import { exerciseNames, lastLoggedEntry, maxWeightBeforeEntry, normalizeName } from '../lib/pr.js'
 
 const emptySet = { reps: '', weight: '' }
 const emptyForm = { exercise: '', sets: [{ ...emptySet }] }
@@ -8,6 +8,7 @@ const emptyForm = { exercise: '', sets: [{ ...emptySet }] }
 export default function LogScreen({ sessions, addEntry, removeEntry, templates, saveTemplate, deleteTemplate }) {
   const [form, setForm] = useState(emptyForm)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [prFlash, setPrFlash] = useState(null)
   const today = todayISO()
 
   const todaySession = useMemo(
@@ -63,8 +64,24 @@ export default function LogScreen({ sessions, addEntry, removeEntry, templates, 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!canSubmit) return
+
+    const newTopWeight = Math.max(...validSets.map((s) => Number(s.weight)))
+    const exerciseKey = normalizeName(form.exercise)
+    let existingBest = 0
+    for (const s of sessions) {
+      for (const en of s.entries) {
+        if (normalizeName(en.exercise) !== exerciseKey) continue
+        const w = topWeight(en)
+        if (w > existingBest) existingBest = w
+      }
+    }
+
     addEntry({ exercise: form.exercise, sets: validSets })
     setForm({ exercise: form.exercise, sets: [{ ...emptySet }] })
+
+    if (newTopWeight > existingBest && newTopWeight > 0) {
+      setPrFlash({ exercise: form.exercise, weight: newTopWeight })
+    }
   }
 
   const handleLoadTemplate = (template) => {
@@ -232,6 +249,18 @@ export default function LogScreen({ sessions, addEntry, removeEntry, templates, 
           </ul>
         )}
       </section>
+
+      {prFlash && (
+        <div
+          className="fixed inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-pr-toast"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }}
+          onAnimationEnd={() => setPrFlash(null)}
+        >
+          <div className="bg-amber-400 text-ink-950 font-bold text-sm px-5 py-2.5 rounded-full shadow-lg shadow-amber-400/20 flex items-center gap-2 whitespace-nowrap">
+            🏆 New PR — {prFlash.exercise}: {prFlash.weight} kg
+          </div>
+        </div>
+      )}
 
       {showTemplates && (
         <TemplatesSheet

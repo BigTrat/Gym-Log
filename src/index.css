@@ -46,6 +46,17 @@ input[type='number'] {
   padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
 }
 
+@keyframes pr-toast {
+  0%   { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  10%  { opacity: 1; transform: translateY(0) scale(1); }
+  75%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+}
+
+.animate-pr-toast {
+  animation: pr-toast 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @layer components {
   .card {
     @apply bg-ink-800/70 border border-ink-700 rounded-2xl;
