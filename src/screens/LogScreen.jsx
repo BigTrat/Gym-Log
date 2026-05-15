@@ -5,8 +5,9 @@ import { exerciseNames, maxWeightBeforeEntry } from '../lib/pr.js'
 const emptySet = { reps: '', weight: '' }
 const emptyForm = { exercise: '', sets: [{ ...emptySet }] }
 
-export default function LogScreen({ sessions, addEntry, removeEntry }) {
+export default function LogScreen({ sessions, addEntry, removeEntry, templates, saveTemplate, deleteTemplate }) {
   const [form, setForm] = useState(emptyForm)
+  const [showTemplates, setShowTemplates] = useState(false)
   const today = todayISO()
 
   const todaySession = useMemo(
@@ -61,14 +62,31 @@ export default function LogScreen({ sessions, addEntry, removeEntry }) {
     setForm({ exercise: form.exercise, sets: [{ ...emptySet }] })
   }
 
+  const handleLoadTemplate = (template) => {
+    template.exercises.forEach((ex) => addEntry(ex))
+    setShowTemplates(false)
+  }
+
   return (
     <div className="space-y-5">
       <section className="card p-4">
-        <div className="flex items-baseline justify-between mb-3">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs uppercase tracking-wider text-slate-500">
             New entry
           </h2>
-          <span className="text-xs text-slate-500">{formatDate(today)}</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowTemplates(true)}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-accent-300 transition"
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              Templates
+            </button>
+            <span className="text-xs text-slate-500">{formatDate(today)}</span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -203,6 +221,130 @@ export default function LogScreen({ sessions, addEntry, removeEntry }) {
           </ul>
         )}
       </section>
+
+      {showTemplates && (
+        <TemplatesSheet
+          templates={templates}
+          todaySession={todaySession}
+          onLoad={handleLoadTemplate}
+          onSave={saveTemplate}
+          onDelete={deleteTemplate}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function TemplatesSheet({ templates, todaySession, onLoad, onSave, onDelete, onClose }) {
+  const [nameDraft, setNameDraft] = useState('')
+  const canSave = todaySession && todaySession.entries.length > 0
+
+  const handleSave = () => {
+    if (!nameDraft.trim() || !canSave) return
+    onSave(nameDraft, todaySession.entries)
+    setNameDraft('')
+  }
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-ink-950/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl bg-ink-900 border-t border-ink-700 max-h-[75vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-ink-700 shrink-0">
+          <h2 className="font-semibold text-sm">Templates</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-100 transition p-1 -mr-1"
+            aria-label="Close"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {templates.length === 0 ? (
+            <div className="py-8 text-center">
+              <div className="text-sm text-slate-400">No templates yet</div>
+              <div className="text-xs text-slate-500 mt-1">
+                {canSave
+                  ? 'Save today\'s session below to create one.'
+                  : 'Log a session first, then save it as a template.'}
+              </div>
+            </div>
+          ) : (
+            templates.map((t) => (
+              <TemplateRow
+                key={t.id}
+                template={t}
+                onLoad={() => onLoad(t)}
+                onDelete={() => onDelete(t.id)}
+              />
+            ))
+          )}
+        </div>
+
+        {canSave && (
+          <div className="shrink-0 border-t border-ink-700 px-4 py-4 space-y-2">
+            <p className="text-[11px] text-slate-500 uppercase tracking-wider">
+              Save today as template
+            </p>
+            <div className="flex gap-2">
+              <input
+                className="input flex-1"
+                placeholder="e.g. Push Day"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                autoCapitalize="words"
+              />
+              <button
+                onClick={handleSave}
+                disabled={!nameDraft.trim()}
+                className="shrink-0 px-4 bg-accent-500 hover:bg-accent-600 active:bg-accent-600 text-ink-950 font-semibold rounded-xl text-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+function TemplateRow({ template, onLoad, onDelete }) {
+  return (
+    <div className="card px-4 py-3 flex items-center justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="font-medium text-sm truncate">{template.name}</div>
+        <div className="text-xs text-slate-500 mt-0.5">
+          {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+          {' · '}
+          {template.exercises.reduce((n, e) => n + (e.sets?.length || 0), 0)} sets
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onLoad}
+          className="text-xs font-semibold text-accent-300 hover:text-accent-400 bg-accent-500/10 hover:bg-accent-500/20 px-3 py-1.5 rounded-lg transition"
+        >
+          Load
+        </button>
+        <button
+          onClick={onDelete}
+          aria-label="Delete template"
+          className="text-slate-500 hover:text-red-400 transition p-1.5"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

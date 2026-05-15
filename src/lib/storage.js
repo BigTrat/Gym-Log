@@ -76,6 +76,23 @@ export function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 }
 
+const TEMPLATES_KEY = 'gymlog.templates.v1'
+
+export function loadTemplates() {
+  try {
+    const raw = localStorage.getItem(TEMPLATES_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function saveTemplates(templates) {
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates))
+}
+
 export const EXPORT_SCHEMA = 'gymlog/v1'
 
 export function exportSessions(sessions) {

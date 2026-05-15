@@ -5,6 +5,7 @@ import HistoryScreen from './screens/HistoryScreen.jsx'
 import ProgressScreen from './screens/ProgressScreen.jsx'
 import SettingsScreen from './screens/SettingsScreen.jsx'
 import { useSessions } from './hooks/useSessions.js'
+import { useTemplates } from './hooks/useTemplates.js'
 
 const titles = {
   log: 'Today',
@@ -16,6 +17,7 @@ const titles = {
 export default function App() {
   const [tab, setTab] = useState('log')
   const store = useSessions()
+  const templateStore = useTemplates()
 
   return (
     <div className="min-h-full flex flex-col bg-ink-950 text-slate-100">
@@ -34,7 +36,7 @@ export default function App() {
       </header>
 
       <main className="flex-1 max-w-md w-full mx-auto px-5 pt-4 pb-24">
-        {tab === 'log' && <LogScreen {...store} />}
+        {tab === 'log' && <LogScreen {...store} {...templateStore} />}
         {tab === 'history' && <HistoryScreen {...store} />}
         {tab === 'progress' && <ProgressScreen {...store} />}
         {tab === 'settings' && <SettingsScreen {...store} />}
