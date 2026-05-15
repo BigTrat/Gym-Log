@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate, todayISO, topWeight } from '../lib/storage.js'
-import { exerciseNames, maxWeightBeforeEntry } from '../lib/pr.js'
+import { exerciseNames, lastLoggedEntry, maxWeightBeforeEntry } from '../lib/pr.js'
 
 const emptySet = { reps: '', weight: '' }
 const emptyForm = { exercise: '', sets: [{ ...emptySet }] }
@@ -23,6 +23,11 @@ export default function LogScreen({ sessions, addEntry, removeEntry, templates, 
       .filter((n) => n.toLowerCase().includes(q) && n.toLowerCase() !== q)
       .slice(0, 4)
   }, [form.exercise, allNames])
+
+  const lastEntry = useMemo(
+    () => (form.exercise.trim() ? lastLoggedEntry(sessions, form.exercise) : null),
+    [form.exercise, sessions]
+  )
 
   const validSets = form.sets.filter(
     (s) =>
@@ -114,6 +119,12 @@ export default function LogScreen({ sessions, addEntry, removeEntry, templates, 
               </div>
             )}
           </div>
+
+          {lastEntry && (
+            <p className="text-xs text-slate-500 -mt-1 ml-1">
+              Last time: {setsSummary(lastEntry.sets)}
+            </p>
+          )}
 
           <div>
             <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 text-[10px] uppercase tracking-wider text-slate-500 px-1 mb-1">
