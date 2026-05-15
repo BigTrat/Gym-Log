@@ -4,6 +4,7 @@ import LogScreen from './screens/LogScreen.jsx'
 import HistoryScreen from './screens/HistoryScreen.jsx'
 import ProgressScreen from './screens/ProgressScreen.jsx'
 import SettingsScreen from './screens/SettingsScreen.jsx'
+import BodyScreen from './screens/BodyScreen.jsx'
 import { useSessions } from './hooks/useSessions.js'
 import { useTemplates } from './hooks/useTemplates.js'
 import { useBodyWeight } from './hooks/useBodyWeight.js'
@@ -12,6 +13,7 @@ const titles = {
   log: 'Today',
   history: 'History',
   progress: 'Progress',
+  body: 'Body Weight',
   settings: 'Settings'
 }
 
@@ -41,7 +43,8 @@ export default function App() {
         {tab === 'log' && <LogScreen {...store} {...templateStore} />}
         {tab === 'history' && <HistoryScreen {...store} />}
         {tab === 'progress' && <ProgressScreen {...store} />}
-        {tab === 'settings' && <SettingsScreen {...store} {...bwStore} />}
+        {tab === 'body' && <BodyScreen {...bwStore} />}
+        {tab === 'settings' && <SettingsScreen {...store} />}
       </main>
 
       <BottomNav active={tab} onChange={setTab} />

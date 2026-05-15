@@ -30,6 +30,19 @@ const tabs = [
     )
   },
   {
+    id: 'body',
+    label: 'Body',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 3h12" />
+        <path d="M12 3v18" />
+        <path d="M3 9l3-6 3 6a3 3 0 0 1-6 0z" />
+        <path d="M15 9l3-6 3 6a3 3 0 0 1-6 0z" />
+        <path d="M3 21h18" />
+      </svg>
+    )
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: (
@@ -44,7 +57,7 @@ const tabs = [
 export default function BottomNav({ active, onChange }) {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 bg-ink-900/95 backdrop-blur border-t border-ink-700 safe-bottom">
-      <div className="max-w-md mx-auto grid grid-cols-4">
+      <div className="max-w-md mx-auto grid grid-cols-5">
         {tabs.map((t) => {
           const isActive = active === t.id
           return (
@@ -55,10 +68,10 @@ export default function BottomNav({ active, onChange }) {
                 isActive ? 'text-accent-400' : 'text-slate-500'
               }`}
             >
-              <span className={`w-6 h-6 ${isActive ? 'scale-110' : ''} transition-transform`}>
+              <span className={`w-5 h-5 ${isActive ? 'scale-110' : ''} transition-transform`}>
                 {t.icon}
               </span>
-              <span className="text-[11px] font-medium tracking-wide">{t.label}</span>
+              <span className="text-[10px] font-medium tracking-wide">{t.label}</span>
             </button>
           )
         })}
