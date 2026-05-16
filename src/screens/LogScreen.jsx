@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate, todayISO, topWeight } from '../lib/storage.js'
 import { dailyStreak, exerciseNames, lastLoggedEntry, maxWeightBeforeEntry, normalizeName } from '../lib/pr.js'
-import { SwipeToDelete } from '../components/SwipeToDelete.jsx'
 
 const BUILT_IN = [
   'Bench Press', 'Incline Bench Press', 'Decline Bench Press',
@@ -597,9 +596,7 @@ export function setsSummary(sets) {
 
 function EntryCard({ entry, isPR, isEditing, onEdit, onRemove }) {
   return (
-    <SwipeToDelete
-      as="li"
-      onDelete={onRemove}
+    <li
       className={`card transition ${
         isEditing
           ? 'border-accent-500/50 bg-accent-500/5'
@@ -649,7 +646,7 @@ function EntryCard({ entry, isPR, isEditing, onEdit, onRemove }) {
           </button>
         </div>
       </div>
-    </SwipeToDelete>
+    </li>
   )
 }
 

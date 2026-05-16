@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { formatDate, topWeight } from '../lib/storage.js'
 import { detectCategory, maxWeightBeforeEntry } from '../lib/pr.js'
 import { setsSummary } from './LogScreen.jsx'
-import { SwipeToDelete } from '../components/SwipeToDelete.jsx'
 
 export default function HistoryScreen({ sessions, removeSession, restDays = [], removeRestDay }) {
   const [openId, setOpenId] = useState(null)
@@ -31,20 +30,26 @@ export default function HistoryScreen({ sessions, removeSession, restDays = [], 
       {items.map((item) => {
         if (item._type === 'rest') {
           return (
-            <SwipeToDelete
-              key={item.id}
-              as="li"
-              className="card"
-              onDelete={() => removeRestDay(item.id)}
-            >
-              <div className="px-4 py-3 flex items-center gap-3">
-                <span className="text-base leading-none">💤</span>
-                <div>
-                  <div className="font-medium text-sm">{formatDate(item.date)}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Rest day</div>
+            <li key={item.id} className="card">
+              <div className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-base leading-none">💤</span>
+                  <div>
+                    <div className="font-medium text-sm">{formatDate(item.date)}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">Rest day</div>
+                  </div>
                 </div>
+                <button
+                  onClick={() => removeRestDay(item.id)}
+                  aria-label="Delete rest day"
+                  className="text-slate-500 hover:text-red-400 transition p-2 -mr-2 shrink-0"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14" />
+                  </svg>
+                </button>
               </div>
-            </SwipeToDelete>
+            </li>
           )
         }
 
@@ -54,12 +59,7 @@ export default function HistoryScreen({ sessions, removeSession, restDays = [], 
         const exercises = new Set(s.entries.map((e) => e.exercise.toLowerCase())).size
         const category = detectCategory(s.entries.map((e) => e.exercise))
         return (
-          <SwipeToDelete
-            key={s.id}
-            as="li"
-            className="card"
-            onDelete={() => { removeSession(s.id); if (openId === s.id) setOpenId(null) }}
-          >
+          <li key={s.id} className="card">
             <button
               onClick={() => setOpenId(open ? null : s.id)}
               className="w-full px-4 py-3 flex items-center justify-between text-left"
@@ -124,7 +124,7 @@ export default function HistoryScreen({ sessions, removeSession, restDays = [], 
                 </button>
               </div>
             )}
-          </SwipeToDelete>
+          </li>
         )
       })}
     </ul>
