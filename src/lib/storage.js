@@ -93,6 +93,23 @@ export function saveBodyWeights(entries) {
   localStorage.setItem(BW_KEY, JSON.stringify(entries))
 }
 
+const REST_DAYS_KEY = 'gymlog.restdays.v1'
+
+export function loadRestDays() {
+  try {
+    const raw = localStorage.getItem(REST_DAYS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function saveRestDays(entries) {
+  localStorage.setItem(REST_DAYS_KEY, JSON.stringify(entries))
+}
+
 const TEMPLATES_KEY = 'gymlog.templates.v1'
 
 export function loadTemplates() {

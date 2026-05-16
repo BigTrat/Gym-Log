@@ -11,6 +11,12 @@ import {
 } from 'recharts'
 import { formatDate, todayISO } from '../lib/storage.js'
 
+const CHART = {
+  grid: '#1a1f2c', axis: '#475569', axisLine: '#1a1f2c',
+  cursor: '#334155', tooltipBg: '#11151f', tooltipBorder: '#1a1f2c',
+  tooltipLabel: '#94a3b8', refLine: '#334155',
+}
+
 export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
   const [input, setInput] = useState('')
   const today = todayISO()
@@ -23,10 +29,11 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
     setInput('')
   }
 
+  const cc = CHART
   const first = weightEntries[0]
   const last = weightEntries[weightEntries.length - 1]
   const change = first && last && first !== last ? last.weight - first.weight : null
-  const hasChart = weightEntries.length >= 2
+  const hasChart = weightEntries.length >= 1
 
   return (
     <div className="space-y-5">
@@ -112,21 +119,21 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
                     data={weightEntries}
                     margin={{ top: 12, right: 16, bottom: 4, left: 0 }}
                   >
-                    <CartesianGrid stroke="#1a1f2c" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid stroke={cc.grid} strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="date"
-                      stroke="#475569"
+                      stroke={cc.axis}
                       fontSize={10}
                       tickMargin={6}
                       tickLine={false}
-                      axisLine={{ stroke: '#1a1f2c' }}
+                      axisLine={{ stroke: cc.axisLine }}
                       tickFormatter={(v) => {
                         const [, m, d] = v.split('-')
                         return `${Number(m)}/${Number(d)}`
                       }}
                     />
                     <YAxis
-                      stroke="#475569"
+                      stroke={cc.axis}
                       fontSize={10}
                       width={34}
                       tickLine={false}
@@ -134,21 +141,21 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
                       domain={['auto', 'auto']}
                     />
                     <Tooltip
-                      cursor={{ stroke: '#334155', strokeDasharray: 3 }}
+                      cursor={{ stroke: cc.cursor, strokeDasharray: 3 }}
                       contentStyle={{
-                        background: '#11151f',
-                        border: '1px solid #1a1f2c',
+                        background: cc.tooltipBg,
+                        border: `1px solid ${cc.tooltipBorder}`,
                         borderRadius: 10,
                         fontSize: 12
                       }}
-                      labelStyle={{ color: '#94a3b8' }}
+                      labelStyle={{ color: cc.tooltipLabel }}
                       formatter={(value) => [`${value} kg`, 'Weight']}
                       labelFormatter={(label) => formatDate(label)}
                     />
                     {first && (
                       <ReferenceLine
                         y={first.weight}
-                        stroke="#334155"
+                        stroke={cc.refLine}
                         strokeDasharray="4 3"
                       />
                     )}

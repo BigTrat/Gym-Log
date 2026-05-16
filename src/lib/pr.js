@@ -135,6 +135,30 @@ export function weeklyVolumeByCategory(sessions) {
   return volume
 }
 
+// Returns ISO string for a Date object
+function isoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+
+export function dailyStreak(sessions, restDays = []) {
+  if (!sessions.length && !restDays.length) return 0
+  const workedDays = new Set([...sessions.map((s) => s.date), ...restDays.map((r) => r.date)])
+  const today = isoDate(new Date())
+  // If today has no workout yet, start checking from yesterday so a rest day
+  // today doesn't immediately break a streak built up over previous days.
+  const [ty, tm, td] = today.split('-').map(Number)
+  const yesterday = isoDate(new Date(ty, tm - 1, td - 1))
+  let cursor = workedDays.has(today) ? today : yesterday
+  let streak = 0
+  while (workedDays.has(cursor)) {
+    streak++
+    const [cy, cm, cd] = cursor.split('-').map(Number)
+    cursor = isoDate(new Date(cy, cm - 1, cd - 1))
+  }
+  return streak
+}
+
 export function progressSeries(sessions, exerciseName) {
   const key = normalizeName(exerciseName)
   const byDate = new Map()

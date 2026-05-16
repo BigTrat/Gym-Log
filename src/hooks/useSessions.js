@@ -47,6 +47,32 @@ export function useSessions() {
     })
   }, [])
 
+  const updateEntry = useCallback((sessionId, entryId, updated) => {
+    const cleanSets = (updated.sets || [])
+      .map((s) => ({ reps: Number(s.reps), weight: Number(s.weight) }))
+      .filter((s) => Number.isFinite(s.reps) && Number.isFinite(s.weight) && s.reps > 0)
+    if (cleanSets.length === 0) return
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id !== sessionId) return s
+        return {
+          ...s,
+          entries: s.entries.map((e) =>
+            e.id !== entryId
+              ? e
+              : { ...e, exercise: updated.exercise.trim(), sets: cleanSets }
+          )
+        }
+      })
+    )
+  }, [])
+
+  const finishSession = useCallback((sessionId, finishedAt) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id !== sessionId ? s : { ...s, finishedAt }))
+    )
+  }, [])
+
   const removeSession = useCallback((sessionId) => {
     setSessions((prev) => prev.filter((s) => s.id !== sessionId))
   }, [])
@@ -56,5 +82,5 @@ export function useSessions() {
     setSessions(sorted)
   }, [])
 
-  return { sessions, addEntry, removeEntry, removeSession, replaceSessions }
+  return { sessions, addEntry, removeEntry, updateEntry, finishSession, removeSession, replaceSessions }
 }

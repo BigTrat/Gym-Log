@@ -5,15 +5,18 @@ import HistoryScreen from './screens/HistoryScreen.jsx'
 import ProgressScreen from './screens/ProgressScreen.jsx'
 import SettingsScreen from './screens/SettingsScreen.jsx'
 import BodyScreen from './screens/BodyScreen.jsx'
+import CalcScreen from './screens/CalcScreen.jsx'
 import { useSessions } from './hooks/useSessions.js'
 import { useTemplates } from './hooks/useTemplates.js'
 import { useBodyWeight } from './hooks/useBodyWeight.js'
+import { useRestDays } from './hooks/useRestDays.js'
 
 const titles = {
   log: 'Today',
   history: 'History',
   progress: 'Progress',
   body: 'Body Weight',
+  calc: 'Calculators',
   settings: 'Settings'
 }
 
@@ -22,6 +25,7 @@ export default function App() {
   const store = useSessions()
   const templateStore = useTemplates()
   const bwStore = useBodyWeight()
+  const rdStore = useRestDays()
 
   return (
     <div className="min-h-full flex flex-col bg-ink-950 text-slate-100">
@@ -40,10 +44,11 @@ export default function App() {
       </header>
 
       <main className="flex-1 max-w-md w-full mx-auto px-5 pt-4 pb-24">
-        {tab === 'log' && <LogScreen {...store} {...templateStore} />}
-        {tab === 'history' && <HistoryScreen {...store} />}
+        {tab === 'log' && <LogScreen {...store} {...templateStore} {...rdStore} />}
+        {tab === 'history' && <HistoryScreen {...store} {...rdStore} />}
         {tab === 'progress' && <ProgressScreen {...store} />}
         {tab === 'body' && <BodyScreen {...bwStore} />}
+        {tab === 'calc' && <CalcScreen />}
         {tab === 'settings' && <SettingsScreen {...store} />}
       </main>
 

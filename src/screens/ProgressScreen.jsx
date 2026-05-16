@@ -7,7 +7,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  ReferenceDot
+  ReferenceDot,
+  ReferenceLine
 } from 'recharts'
 import {
   exerciseNames,
@@ -16,6 +17,12 @@ import {
   weeklyVolumeByCategory
 } from '../lib/pr.js'
 import { formatDate } from '../lib/storage.js'
+
+const CHART = {
+  grid: '#1a1f2c', axis: '#475569', axisLine: '#1a1f2c',
+  cursor: '#334155', tooltipBg: '#11151f', tooltipBorder: '#1a1f2c',
+  tooltipLabel: '#94a3b8', refLine: '#334155', refLineLabel: '#64748b',
+}
 
 export default function ProgressScreen({ sessions }) {
   const names = useMemo(() => exerciseNames(sessions), [sessions])
@@ -33,6 +40,7 @@ export default function ProgressScreen({ sessions }) {
 
   const muscleHeat = useMemo(() => muscleHeatThisWeek(sessions), [sessions])
   const weeklyVolume = useMemo(() => weeklyVolumeByCategory(sessions), [sessions])
+  const cc = CHART
 
   const best = data.reduce((acc, p) => (p.weight > acc.weight ? p : acc), { weight: -1 })
   const latest = data[data.length - 1]
@@ -86,17 +94,17 @@ export default function ProgressScreen({ sessions }) {
 
             <div className="h-64 -mx-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: 0 }}>
+                <LineChart data={data} margin={{ top: 12, right: 76, bottom: 4, left: 0 }}>
                   <defs>
                     <linearGradient id="line" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#38bdf8" stopOpacity="1" />
                       <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.4" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#1a1f2c" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke={cc.grid} strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="date"
-                    stroke="#475569"
+                    stroke={cc.axis}
                     fontSize={10}
                     tickMargin={6}
                     tickFormatter={(v) => {
@@ -104,10 +112,10 @@ export default function ProgressScreen({ sessions }) {
                       return `${Number(m)}/${Number(d)}`
                     }}
                     tickLine={false}
-                    axisLine={{ stroke: '#1a1f2c' }}
+                    axisLine={{ stroke: cc.axisLine }}
                   />
                   <YAxis
-                    stroke="#475569"
+                    stroke={cc.axis}
                     fontSize={10}
                     width={32}
                     tickLine={false}
@@ -115,14 +123,14 @@ export default function ProgressScreen({ sessions }) {
                     domain={['auto', 'auto']}
                   />
                   <Tooltip
-                    cursor={{ stroke: '#334155', strokeDasharray: 3 }}
+                    cursor={{ stroke: cc.cursor, strokeDasharray: 3 }}
                     contentStyle={{
-                      background: '#11151f',
-                      border: '1px solid #1a1f2c',
+                      background: cc.tooltipBg,
+                      border: `1px solid ${cc.tooltipBorder}`,
                       borderRadius: 10,
                       fontSize: 12
                     }}
-                    labelStyle={{ color: '#94a3b8' }}
+                    labelStyle={{ color: cc.tooltipLabel }}
                     formatter={(value) => [`${value} kg`, 'Top weight']}
                     labelFormatter={(label) => formatDate(label)}
                   />
@@ -134,6 +142,19 @@ export default function ProgressScreen({ sessions }) {
                     dot={{ r: 3, fill: '#38bdf8', strokeWidth: 0 }}
                     activeDot={{ r: 5, fill: '#7dd3fc' }}
                   />
+                  {best.weight >= 0 && (
+                    <ReferenceLine
+                      y={best.weight}
+                      stroke={cc.refLine}
+                      strokeDasharray="4 3"
+                      label={{
+                        value: `Best: ${best.weight} kg`,
+                        position: 'right',
+                        fill: cc.refLineLabel,
+                        fontSize: 10
+                      }}
+                    />
+                  )}
                   {data
                     .filter((p) => p.pr)
                     .map((p) => (
@@ -164,67 +185,88 @@ export default function ProgressScreen({ sessions }) {
 
 // ─── Heatmap ────────────────────────────────────────────────────────────────
 
-function heatColor(sets) {
-  if (!sets || sets === 0) return '#1e2535'
-  if (sets <= 3) return '#0b3d5e'
-  if (sets <= 6) return '#0d6499'
-  if (sets <= 10) return '#1a8ec4'
-  return '#38bdf8'
+const HEAT = {
+  body: '#252d3d',
+  levels: ['#0b3d5e', '#0d6499', '#1a8ec4', '#38bdf8'],
+  legend: ['#252d3d', '#0b3d5e', '#0d6499', '#38bdf8'],
 }
 
-const BODY_FILL = '#252d3d'
+function heatColor(sets, scheme) {
+  if (!sets || sets === 0) return scheme.body
+  if (sets <= 3) return scheme.levels[0]
+  if (sets <= 6) return scheme.levels[1]
+  if (sets <= 10) return scheme.levels[2]
+  return scheme.levels[3]
+}
 
-function BodySVG({ view, heat }) {
+function BodySVG({ view, heat, scheme }) {
+  const c = (sets) => heatColor(sets, scheme)
   const back = view === 'back'
   return (
-    <svg viewBox="0 0 80 185" className="w-full" aria-hidden="true">
-      {/* silhouette */}
-      <g fill={BODY_FILL}>
-        <circle cx="40" cy="12" r="10" />
-        <rect x="36" y="21" width="8" height="8" rx="2" />
-        <rect x="22" y="27" width="36" height="68" rx="5" />
-        <rect x="8"  y="26" width="14" height="48" rx="6" />
-        <rect x="58" y="26" width="14" height="48" rx="6" />
-        <rect x="22" y="93" width="16" height="85" rx="6" />
-        <rect x="42" y="93" width="16" height="85" rx="6" />
+    <svg viewBox="0 0 100 220" className="w-full" aria-hidden="true">
+      {/* ── base silhouette ── */}
+      <g fill={scheme.body}>
+        {/* head */}
+        <circle cx="50" cy="12" r="9.5" />
+        {/* neck */}
+        <path d="M45,22 Q43,26 43,30 L57,30 Q57,26 55,22 Z" />
+        {/* torso – wide shoulders, narrow waist (V-taper) */}
+        <path d="M22,30 C36,26 64,26 78,30 C78,40 74,48 68,52 C68,64 67,76 67,82 C67,90 68,95 70,98 C68,104 62,108 54,109 L46,109 C38,108 32,104 30,98 C32,95 33,90 33,82 C33,76 32,64 32,52 C26,48 22,40 22,30 Z" />
+        {/* left arm */}
+        <path d="M22,32 C16,36 11,46 10,60 C9,72 10,84 12,94 C13,99 14,103 15,107 L21,106 C21,100 21,93 22,86 C23,74 24,62 25,54 C25,46 24,38 22,32 Z" />
+        {/* right arm */}
+        <path d="M78,32 C84,36 89,46 90,60 C91,72 90,84 88,94 C87,99 86,103 85,107 L79,106 C79,100 79,93 78,86 C77,74 76,62 75,54 C75,46 76,38 78,32 Z" />
+        {/* left leg */}
+        <path d="M30,108 C26,118 24,132 24,148 C24,158 25,166 27,174 C26,184 27,196 29,207 L38,208 C37,196 37,184 38,174 C40,166 41,158 41,148 C42,132 42,118 43,108 Z" />
+        {/* right leg */}
+        <path d="M70,108 C74,118 76,132 76,148 C76,158 75,166 73,174 C74,184 73,196 71,207 L62,208 C63,196 63,184 62,174 C60,166 59,158 59,148 C58,132 58,118 57,108 Z" />
       </g>
 
       {back ? (
         /* ── Back muscles ── */
         <>
           {/* upper back / traps */}
-          <ellipse cx="40" cy="44" rx="14" ry="10" fill={heatColor(heat.back)} />
-          {/* lats */}
-          <ellipse cx="24" cy="59" rx="8"  ry="13" fill={heatColor(heat.lats)} />
-          <ellipse cx="56" cy="59" rx="8"  ry="13" fill={heatColor(heat.lats)} />
-          {/* rear delts */}
-          <ellipse cx="17" cy="32" rx="8"  ry="7"  fill={heatColor(heat.shoulders)} />
-          <ellipse cx="63" cy="32" rx="8"  ry="7"  fill={heatColor(heat.shoulders)} />
-          {/* triceps */}
-          <ellipse cx="11" cy="49" rx="5"  ry="9"  fill={heatColor(heat.triceps)} />
-          <ellipse cx="69" cy="49" rx="5"  ry="9"  fill={heatColor(heat.triceps)} />
+          <path d="M34,32 C26,36 24,46 26,56 C28,62 36,66 50,66 C64,66 72,62 74,56 C76,46 74,36 66,32 C60,28 56,28 50,30 C44,28 40,28 34,32 Z" fill={c(heat.back)} />
+          {/* lats – left */}
+          <path d="M28,54 C22,60 20,70 22,80 C24,86 28,89 34,87 C38,85 39,78 38,68 C37,60 34,55 28,54 Z" fill={c(heat.lats)} />
+          {/* lats – right */}
+          <path d="M72,54 C78,60 80,70 78,80 C76,86 72,89 66,87 C62,85 61,78 62,68 C63,60 66,55 72,54 Z" fill={c(heat.lats)} />
+          {/* rear delts – left */}
+          <path d="M19,32 C13,36 11,44 13,52 C15,58 20,60 26,57 C29,54 29,47 27,41 C25,36 22,31 19,32 Z" fill={c(heat.shoulders)} />
+          {/* rear delts – right */}
+          <path d="M81,32 C87,36 89,44 87,52 C85,58 80,60 74,57 C71,54 71,47 73,41 C75,36 78,31 81,32 Z" fill={c(heat.shoulders)} />
+          {/* triceps – left */}
+          <path d="M14,56 C10,63 9,73 11,83 C13,89 17,91 22,88 C26,85 26,76 24,66 C22,58 18,54 14,56 Z" fill={c(heat.triceps)} />
+          {/* triceps – right */}
+          <path d="M86,56 C90,63 91,73 89,83 C87,89 83,91 78,88 C74,85 74,76 76,66 C78,58 82,54 86,56 Z" fill={c(heat.triceps)} />
           {/* glutes */}
-          <ellipse cx="40" cy="98" rx="15" ry="9"  fill={heatColor(heat.legs)} />
-          {/* hamstrings */}
-          <ellipse cx="30" cy="128" rx="8" ry="22" fill={heatColor(heat.legs)} />
-          <ellipse cx="50" cy="128" rx="8" ry="22" fill={heatColor(heat.legs)} />
+          <path d="M33,110 C28,115 27,123 30,131 C32,137 38,139 50,137 C62,139 68,137 70,131 C73,123 72,115 67,110 C62,105 56,104 50,105 C44,104 38,105 33,110 Z" fill={c(heat.legs)} />
+          {/* hamstrings – left */}
+          <path d="M30,135 C26,143 25,155 27,165 C29,171 34,173 40,171 C44,169 45,160 44,148 C43,136 41,129 38,129 Z" fill={c(heat.legs)} />
+          {/* hamstrings – right */}
+          <path d="M70,135 C74,143 75,155 73,165 C71,171 66,173 60,171 C56,169 55,160 56,148 C57,136 59,129 62,129 Z" fill={c(heat.legs)} />
         </>
       ) : (
         /* ── Front muscles ── */
         <>
-          {/* chest */}
-          <ellipse cx="40" cy="44" rx="14" ry="10" fill={heatColor(heat.chest)} />
-          {/* front delts */}
-          <ellipse cx="17" cy="32" rx="8"  ry="7"  fill={heatColor(heat.shoulders)} />
-          <ellipse cx="63" cy="32" rx="8"  ry="7"  fill={heatColor(heat.shoulders)} />
-          {/* biceps */}
-          <ellipse cx="11" cy="49" rx="5"  ry="9"  fill={heatColor(heat.biceps)} />
-          <ellipse cx="69" cy="49" rx="5"  ry="9"  fill={heatColor(heat.biceps)} />
-          {/* core / abs */}
-          <rect x="27" y="57" width="26" height="34" rx="4" fill={heatColor(heat.core)} />
-          {/* quads */}
-          <ellipse cx="30" cy="122" rx="8" ry="22" fill={heatColor(heat.legs)} />
-          <ellipse cx="50" cy="122" rx="8" ry="22" fill={heatColor(heat.legs)} />
+          {/* chest – left pec */}
+          <path d="M35,37 C29,40 26,49 29,57 C31,63 37,65 45,62 C49,60 51,54 50,46 C49,40 45,36 41,36 C39,36 37,36 35,37 Z" fill={c(heat.chest)} />
+          {/* chest – right pec */}
+          <path d="M65,37 C71,40 74,49 71,57 C69,63 63,65 55,62 C51,60 49,54 50,46 C51,40 55,36 59,36 C61,36 63,36 65,37 Z" fill={c(heat.chest)} />
+          {/* front delts – left */}
+          <path d="M19,32 C13,36 11,44 13,52 C15,58 20,60 26,57 C29,54 29,47 27,41 C25,36 22,31 19,32 Z" fill={c(heat.shoulders)} />
+          {/* front delts – right */}
+          <path d="M81,32 C87,36 89,44 87,52 C85,58 80,60 74,57 C71,54 71,47 73,41 C75,36 78,31 81,32 Z" fill={c(heat.shoulders)} />
+          {/* biceps – left */}
+          <path d="M14,56 C10,63 9,73 11,83 C13,89 17,91 22,88 C26,85 26,76 24,66 C22,58 18,54 14,56 Z" fill={c(heat.biceps)} />
+          {/* biceps – right */}
+          <path d="M86,56 C90,63 91,73 89,83 C87,89 83,91 78,88 C74,85 74,76 76,66 C78,58 82,54 86,56 Z" fill={c(heat.biceps)} />
+          {/* abs / core */}
+          <path d="M38,63 C35,70 35,78 37,84 C39,89 43,91 50,91 C57,91 61,89 63,84 C65,78 65,70 62,63 C59,58 55,58 50,59 C45,58 41,58 38,63 Z" fill={c(heat.core)} />
+          {/* quads – left */}
+          <path d="M32,110 C27,120 25,134 26,150 C27,158 31,164 38,162 C43,160 45,151 44,137 C43,122 41,112 39,110 Z" fill={c(heat.legs)} />
+          {/* quads – right */}
+          <path d="M68,110 C73,120 75,134 74,150 C73,158 69,164 62,162 C57,160 55,151 56,137 C57,122 59,112 61,110 Z" fill={c(heat.legs)} />
         </>
       )}
     </svg>
@@ -233,6 +275,13 @@ function BodySVG({ view, heat }) {
 
 function HeatmapCard({ muscleHeat }) {
   const totalSets = Object.values(muscleHeat).reduce((a, b) => a + b, 0)
+  const scheme = HEAT
+  const legend = [
+    { color: scheme.legend[0], label: 'None' },
+    { color: scheme.legend[1], label: 'Low'  },
+    { color: scheme.legend[2], label: 'Med'  },
+    { color: scheme.legend[3], label: 'High' },
+  ]
   return (
     <section className="card p-4">
       <div className="flex items-baseline justify-between mb-3">
@@ -245,22 +294,17 @@ function HeatmapCard({ muscleHeat }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-[10px] text-slate-500 text-center mb-1">Front</p>
-          <BodySVG view="front" heat={muscleHeat} />
+          <BodySVG view="front" heat={muscleHeat} scheme={scheme} />
         </div>
         <div>
           <p className="text-[10px] text-slate-500 text-center mb-1">Back</p>
-          <BodySVG view="back" heat={muscleHeat} />
+          <BodySVG view="back" heat={muscleHeat} scheme={scheme} />
         </div>
       </div>
 
       {/* legend */}
       <div className="flex items-center justify-center gap-3 mt-2">
-        {[
-          { color: '#1e2535', label: 'None' },
-          { color: '#0b3d5e', label: 'Low' },
-          { color: '#0d6499', label: 'Med' },
-          { color: '#38bdf8', label: 'High' }
-        ].map(({ color, label }) => (
+        {legend.map(({ color, label }) => (
           <div key={label} className="flex items-center gap-1 text-[10px] text-slate-500">
             <span
               className="w-2.5 h-2.5 rounded-full border border-ink-600"
@@ -277,7 +321,7 @@ function HeatmapCard({ muscleHeat }) {
           <div key={group} className="flex items-center gap-1 text-[10px]">
             <span
               className="w-2 h-2 rounded-full"
-              style={{ background: heatColor(sets) }}
+              style={{ background: heatColor(sets, scheme) }}
             />
             <span className="text-slate-400 capitalize">{group}</span>
             {sets > 0 && <span className="text-slate-500">{sets}</span>}

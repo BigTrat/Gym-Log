@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatDate, topWeight } from '../lib/storage.js'
 import { detectCategory, maxWeightBeforeEntry } from '../lib/pr.js'
 import { setsSummary } from './LogScreen.jsx'
+import { SwipeToDelete } from '../components/SwipeToDelete.jsx'
 
-export default function HistoryScreen({ sessions, removeSession }) {
+export default function HistoryScreen({ sessions, removeSession, restDays = [], removeRestDay }) {
   const [openId, setOpenId] = useState(null)
 
-  if (sessions.length === 0) {
+  const items = useMemo(() => {
+    const list = [
+      ...sessions.map((s) => ({ ...s, _type: 'session' })),
+      ...restDays.map((r) => ({ ...r, _type: 'rest' })),
+    ]
+    return list.sort((a, b) => (a.date < b.date ? 1 : -1))
+  }, [sessions, restDays])
+
+  if (items.length === 0) {
     return (
       <div className="card p-8 text-center">
         <div className="text-sm font-medium">No sessions yet</div>
@@ -19,13 +28,38 @@ export default function HistoryScreen({ sessions, removeSession }) {
 
   return (
     <ul className="space-y-2">
-      {sessions.map((s) => {
+      {items.map((item) => {
+        if (item._type === 'rest') {
+          return (
+            <SwipeToDelete
+              key={item.id}
+              as="li"
+              className="card"
+              onDelete={() => removeRestDay(item.id)}
+            >
+              <div className="px-4 py-3 flex items-center gap-3">
+                <span className="text-base leading-none">💤</span>
+                <div>
+                  <div className="font-medium text-sm">{formatDate(item.date)}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Rest day</div>
+                </div>
+              </div>
+            </SwipeToDelete>
+          )
+        }
+
+        const s = item
         const open = openId === s.id
         const totalSets = s.entries.reduce((sum, e) => sum + (e.sets?.length || 0), 0)
         const exercises = new Set(s.entries.map((e) => e.exercise.toLowerCase())).size
         const category = detectCategory(s.entries.map((e) => e.exercise))
         return (
-          <li key={s.id} className="card overflow-hidden">
+          <SwipeToDelete
+            key={s.id}
+            as="li"
+            className="card"
+            onDelete={() => { removeSession(s.id); if (openId === s.id) setOpenId(null) }}
+          >
             <button
               onClick={() => setOpenId(open ? null : s.id)}
               className="w-full px-4 py-3 flex items-center justify-between text-left"
@@ -90,7 +124,7 @@ export default function HistoryScreen({ sessions, removeSession }) {
                 </button>
               </div>
             )}
-          </li>
+          </SwipeToDelete>
         )
       })}
     </ul>

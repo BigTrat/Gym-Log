@@ -43,6 +43,22 @@ const tabs = [
     )
   },
   {
+    id: 'calc',
+    label: 'Calc',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <rect x="8" y="5" width="8" height="3" rx="1" />
+        <circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="9" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="16.5" r="1.2" fill="currentColor" stroke="none" />
+      </svg>
+    )
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: (
@@ -57,7 +73,7 @@ const tabs = [
 export default function BottomNav({ active, onChange }) {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 bg-ink-900/95 backdrop-blur border-t border-ink-700 safe-bottom">
-      <div className="max-w-md mx-auto grid grid-cols-5">
+      <div className="max-w-md mx-auto grid grid-cols-6">
         {tabs.map((t) => {
           const isActive = active === t.id
           return (
