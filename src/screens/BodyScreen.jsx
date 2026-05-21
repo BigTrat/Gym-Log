@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   ReferenceLine
 } from 'recharts'
-import { formatDate, todayISO } from '../lib/storage.js'
+import { formatDate, loadWeightGoal, saveWeightGoal, todayISO } from '../lib/storage.js'
 
 const CHART = {
   grid: '#1a1f2c', axis: '#475569', axisLine: '#1a1f2c',
@@ -19,8 +19,14 @@ const CHART = {
 
 export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
   const [input, setInput] = useState('')
+  const [goal, setGoalState] = useState(() => loadWeightGoal())
   const today = todayISO()
   const todayEntry = weightEntries.find((e) => e.date === today)
+
+  const setGoal = (g) => {
+    setGoalState(g)
+    saveWeightGoal(g)
+  }
 
   const handleLog = () => {
     const w = parseFloat(input)
@@ -90,6 +96,11 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
         </div>
       ) : (
         <>
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider">Goal</span>
+            <GoalToggle goal={goal} onChange={setGoal} />
+          </div>
+
           <div className="grid grid-cols-3 gap-2">
             <Stat label="Start" value={first ? `${first.weight} kg` : '—'} />
             <Stat label="Current" value={last ? `${last.weight} kg` : '—'} />
@@ -100,7 +111,13 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
                   ? `${change > 0 ? '+' : ''}${change.toFixed(1)} kg`
                   : '—'
               }
-              accent={change === null ? null : change < 0 ? 'green' : change > 0 ? 'red' : null}
+              accent={
+                change === null || change === 0
+                  ? null
+                  : (goal === 'gain') === (change > 0)
+                  ? 'green'
+                  : 'red'
+              }
             />
           </div>
 
@@ -174,6 +191,29 @@ export default function BodyScreen({ weightEntries, logWeight, removeWeight }) {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function GoalToggle({ goal, onChange }) {
+  return (
+    <div className="flex items-center gap-0.5 bg-ink-800 border border-ink-700 rounded-lg p-0.5">
+      {[
+        { value: 'gain', label: 'Gain weight' },
+        { value: 'lose', label: 'Lose weight' },
+      ].map(({ value, label }) => (
+        <button
+          key={value}
+          onClick={() => onChange(value)}
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+            goal === value
+              ? 'bg-accent-500 text-ink-950'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   )
 }

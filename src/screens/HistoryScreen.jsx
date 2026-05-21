@@ -87,7 +87,8 @@ export default function HistoryScreen({ sessions, removeSession, restDays = [], 
             </button>
 
             {open && (
-              <div className="border-t border-ink-700 px-4 py-3 space-y-2">
+              <div className="border-t border-ink-700 px-4 py-3 space-y-3">
+                <SessionStats session={s} />
                 {s.entries.map((e) => {
                   const prior = maxWeightBeforeEntry(sessions, e, s.date)
                   const top = topWeight(e)
@@ -128,6 +129,32 @@ export default function HistoryScreen({ sessions, removeSession, restDays = [], 
         )
       })}
     </ul>
+  )
+}
+
+function SessionStats({ session: s }) {
+  const duration = s.summary?.duration ?? '—'
+  const volume = s.summary
+    ? s.summary.volume
+    : Math.round(s.entries.reduce((v, e) => v + e.sets.reduce((sv, set) => sv + set.reps * set.weight, 0), 0))
+  const sets = s.summary?.sets ?? s.entries.reduce((n, e) => n + (e.sets?.length || 0), 0)
+  const exercises = s.summary?.exercises ?? new Set(s.entries.map((e) => e.exercise.toLowerCase())).size
+
+  const stats = [
+    { label: 'Duration', value: duration },
+    { label: 'Volume', value: `${volume.toLocaleString()} kg` },
+    { label: 'Sets', value: sets },
+    { label: 'Exercises', value: exercises },
+  ]
+  return (
+    <div className="grid grid-cols-4 gap-1.5">
+      {stats.map(({ label, value }) => (
+        <div key={label} className="bg-ink-800 border border-ink-700 rounded-xl py-2 px-1 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+          <div className="text-sm font-bold mt-0.5 tabular-nums">{value}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 

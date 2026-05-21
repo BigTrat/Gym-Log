@@ -19,11 +19,15 @@ export function useSessions() {
       const next = [...prev]
       let session = next.find((s) => s.date === date)
       if (!session) {
-        session = { id: uid(), date, entries: [] }
+        session = { id: uid(), date, entries: [], workoutStartedAt: Date.now() }
         next.push(session)
       } else {
         const idx = next.indexOf(session)
-        session = { ...session, entries: [...session.entries] }
+        session = {
+          ...session,
+          entries: [...session.entries],
+          workoutStartedAt: session.workoutStartedAt ?? Date.now(),
+        }
         next[idx] = session
       }
       session.entries.push({
@@ -67,9 +71,9 @@ export function useSessions() {
     )
   }, [])
 
-  const finishSession = useCallback((sessionId, finishedAt) => {
+  const finishSession = useCallback((sessionId, finishedAt, summary) => {
     setSessions((prev) =>
-      prev.map((s) => (s.id !== sessionId ? s : { ...s, finishedAt }))
+      prev.map((s) => (s.id !== sessionId ? s : { ...s, finishedAt, summary }))
     )
   }, [])
 

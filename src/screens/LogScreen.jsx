@@ -164,22 +164,24 @@ export default function LogScreen({ sessions, addEntry, removeEntry, updateEntry
     if (!todaySession || todaySession.entries.length === 0) return
     navigator.vibrate?.([100, 50, 100])
     const now = Date.now()
-    const firstAt = Math.min(...todaySession.entries.map((e) => e.createdAt || now))
+    const firstAt =
+      todaySession.workoutStartedAt ??
+      Math.min(...todaySession.entries.map((e) => e.createdAt || now))
     const totalSets = todaySession.entries.reduce((n, e) => n + e.sets.length, 0)
     const totalVolume = todaySession.entries.reduce(
       (v, e) => v + e.sets.reduce((sv, s) => sv + s.reps * s.weight, 0),
       0
     )
-    finishSession(todaySession.id, now)
-    setEditingId(null)
-    setForm(emptyForm)
-    setWorkoutSummary({
+    const summary = {
       exercises: todaySession.entries.length,
       sets: totalSets,
       volume: Math.round(totalVolume),
       duration: formatDuration(now - firstAt),
-      label: formatDate(today),
-    })
+    }
+    finishSession(todaySession.id, now, summary)
+    setEditingId(null)
+    setForm(emptyForm)
+    setWorkoutSummary({ ...summary, label: formatDate(today) })
   }
 
   const handleLoadTemplate = (template) => {

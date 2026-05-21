@@ -127,6 +127,21 @@ export function saveTemplates(templates) {
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates))
 }
 
+const WEIGHT_GOAL_KEY = 'gymlog.weightgoal.v1'
+
+export function loadWeightGoal() {
+  try {
+    const raw = localStorage.getItem(WEIGHT_GOAL_KEY)
+    return raw === 'lose' ? 'lose' : 'gain'
+  } catch {
+    return 'gain'
+  }
+}
+
+export function saveWeightGoal(goal) {
+  localStorage.setItem(WEIGHT_GOAL_KEY, goal)
+}
+
 export const EXPORT_SCHEMA = 'gymlog/v1'
 
 export function exportSessions(sessions) {
@@ -193,7 +208,11 @@ export function parseImport(text) {
       })
     }
 
-    cleaned.push({ id: s.id, date: s.date, entries })
+    const session = { id: s.id, date: s.date, entries }
+    if (Number.isFinite(Number(s.finishedAt))) session.finishedAt = Number(s.finishedAt)
+    if (Number.isFinite(Number(s.workoutStartedAt))) session.workoutStartedAt = Number(s.workoutStartedAt)
+    if (s.summary && typeof s.summary === 'object') session.summary = s.summary
+    cleaned.push(session)
   }
 
   return cleaned.sort((a, b) => (a.date < b.date ? 1 : -1))
