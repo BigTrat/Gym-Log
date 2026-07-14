@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate, todayISO, topWeight } from '../lib/storage.js'
-import { dailyStreak, exerciseNames, lastLoggedEntry, maxWeightBeforeEntry, normalizeName } from '../lib/pr.js'
+import { dailyStreak, exerciseNames, lastLoggedEntry, maxWeightBeforeEntry, maxWeightForExercise, normalizeName } from '../lib/pr.js'
 
 const BUILT_IN = [
   'Bench Press', 'Incline Bench Press', 'Decline Bench Press',
@@ -74,6 +74,11 @@ export default function LogScreen({ sessions, addEntry, removeEntry, updateEntry
 
   const lastEntry = useMemo(
     () => (form.exercise.trim() ? lastLoggedEntry(sessions, form.exercise) : null),
+    [form.exercise, sessions]
+  )
+
+  const prWeight = useMemo(
+    () => (form.exercise.trim() ? maxWeightForExercise(sessions, form.exercise) : 0),
     [form.exercise, sessions]
   )
 
@@ -167,6 +172,7 @@ export default function LogScreen({ sessions, addEntry, removeEntry, updateEntry
     const firstAt =
       todaySession.workoutStartedAt ??
       Math.min(...todaySession.entries.map((e) => e.createdAt || now))
+    console.log('[GymLog] handleFinish — session id:', todaySession.id, 'workoutStartedAt:', todaySession.workoutStartedAt, 'firstAt:', firstAt, 'elapsed ms:', now - firstAt)
     const totalSets = todaySession.entries.reduce((n, e) => n + e.sets.length, 0)
     const totalVolume = todaySession.entries.reduce(
       (v, e) => v + e.sets.reduce((sv, s) => sv + s.reps * s.weight, 0),
@@ -178,6 +184,7 @@ export default function LogScreen({ sessions, addEntry, removeEntry, updateEntry
       volume: Math.round(totalVolume),
       duration: formatDuration(now - firstAt),
     }
+    console.log('[GymLog] summary to save:', summary)
     finishSession(todaySession.id, now, summary)
     setEditingId(null)
     setForm(emptyForm)
@@ -296,6 +303,12 @@ export default function LogScreen({ sessions, addEntry, removeEntry, updateEntry
           {!editingId && lastEntry && (
             <p className="text-xs text-slate-500 -mt-1 ml-1">
               Last time: {setsSummary(lastEntry.sets)}
+            </p>
+          )}
+
+          {!editingId && prWeight > 0 && (
+            <p className="text-xs text-slate-500 -mt-1 ml-1">
+              PR: {prWeight} kg
             </p>
           )}
 

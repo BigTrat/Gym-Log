@@ -30,6 +30,19 @@ export function lastLoggedEntry(sessions, exerciseName) {
   return null
 }
 
+export function maxWeightForExercise(sessions, exerciseName) {
+  const key = normalizeName(exerciseName)
+  let best = 0
+  for (const s of sessions) {
+    for (const e of s.entries) {
+      if (normalizeName(e.exercise) !== key) continue
+      const w = topWeight(e)
+      if (w > best) best = w
+    }
+  }
+  return best
+}
+
 export function isPR(sessions, entry, sessionDate) {
   const prior = maxWeightBeforeEntry(sessions, entry, sessionDate)
   const w = topWeight(entry)
